@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+
+from flask_cors import CORS, cross_origin
 import os
 
 
@@ -11,6 +13,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'ap
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
+CORS(app)
 
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -31,6 +34,11 @@ class MovieSchema(ma.Schema):
 
 movie_schema = MovieSchema()
 movies_schema = MovieSchema(many = True)
+
+@app.route('/')
+def index():
+    return '<div> Hello World! <div>'
+
 
 @app.route('/movie', methods = ['POST'])
 def create_movie():
@@ -68,6 +76,25 @@ def get_movie(id):
     return movie_schema.jsonify(movie)
 
 #  End point to get a movie
+
+@app.route('/movie/<id>', methods = ['PUT'])
+def update_movie(id):
+    movie = Movie.query.get(id)
+
+    title = request.json['title']
+    description = request.json['description']
+    rating = request.json['rating']
+    genre = request.json['genre']
+
+    movie.time = title
+    movie.description = description
+    movie.rating = rating
+    movie.genre = genre
+
+    db.session.commit()
+
+    return movie_schema.jsonify(movie)
+
 
 @app.route("/movie/<id>", methods=["DELETE"])
 def delete_movie(id):
